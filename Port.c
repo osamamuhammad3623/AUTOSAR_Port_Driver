@@ -47,6 +47,12 @@ void Port_Init( const Port_ConfigType* ConfigPtr){
 		 */
 		Port_Status       = PORT_INITIALIZED;
 		Port_PortPins = ConfigPtr->pins; /* address of the first Channels structure --> pins[0] */
+
+		for(Port_PinType index = 0; index < PORT_PINS_NUMBER; index++){
+
+			
+		}
+
 	}
 }
 
