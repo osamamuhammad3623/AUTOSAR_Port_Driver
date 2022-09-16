@@ -145,8 +145,8 @@ typedef enum{
   1. Port number
   2. Pin number
   3. Pin direction (input/output)
-  4. Internal resistor type (off, pull up or pull down)
-  5. Pin initial value (Low/High)
+  4. Internal resistor type (off, pull up or pull down) - if pin is input
+  5. Pin initial value (Low/High) - if pin is ouput
   6. Pin mode (DIO, ADC, UART, CAN, etc..)
   7. Pin direction Changeability
   8. Pin mode Changeability

@@ -57,6 +57,9 @@
 /* Parameter to indicate if the direction is changeable on a port pin during runtime */
 #define PORT_PIN_DIRECTION_CHANGEABLE       (STD_ON)
 
+/* Parameter to indicate if the mode is changeable on a port pin during runtime */
+#define PORT_PIN_MODE_CHANGEABLE            (STD_ON)
+
 /* Pre-compile option for The initial direction of the pin */
 #define PORT_PIN_DIRECTION                  (PORT_PIN_IN)
 
