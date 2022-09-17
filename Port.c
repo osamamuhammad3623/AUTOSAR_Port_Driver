@@ -134,7 +134,7 @@ void Port_Init( const Port_ConfigType* ConfigPtr){
 
 			/* if pin direction is changeable, set the direction according to the pin configuration */
 #if (PORT_PIN_DIRECTION_CHANGEABLE == STD_ON)
-			if (Port_PortPins[index].dir_changeability == STD_ON){
+			if (Port_PortPins[index].dir_changeability == Direction_Changeable){
 
 				if(Port_PortPins[index].direction == PORT_PIN_IN){
 					CLEAR_BIT(*(volatile uint32 *)((volatile uint8 *)current_port + PORT_DIR_REG_OFFSET),Port_PortPins[index].pin_num);
@@ -221,7 +221,7 @@ void Port_SetPinDirection( Port_PinType Pin, Port_PinDirectionType Direction){
 #endif
 
 #if (PORT_PIN_DIRECTION_CHANGEABLE == STD_ON)
-	if (Port_PortPins[Pin].dir_changeability == STD_ON){
+	if (Port_PortPins[Pin].dir_changeability == Direction_Changeable){
 
 		if(Direction == PORT_PIN_IN){
 			CLEAR_BIT(*(volatile uint32 *)((volatile uint8 *)Port_PortPins[Pin].port_num + PORT_DIR_REG_OFFSET),Port_PortPins[Pin].pin_num);
