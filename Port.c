@@ -82,16 +82,11 @@ void Port_Init( const Port_ConfigType* ConfigPtr){
 			SYSCTL_REGCGC2_REG |= (1<<ConfigPtr->pins[index].port_num);
 			uint8 dummy_delay=0; /* wait for 4 clk cycles till clock activation */
 
-			if( ((Port_PortPins[index].port_num == 3) && (Port_PortPins[index].pin_num == 7)) || \
-			 	((Port_PortPins[index].port_num == 5) && (Port_PortPins[index].pin_num == 0)) ) /* PD7 or PF0 */
+			if( ((Port_PortPins[index].port_num == PORTD) && (Port_PortPins[index].pin_num == 7)) || \
+			 	((Port_PortPins[index].port_num == PORTF) && (Port_PortPins[index].pin_num == 0)) ) /* PD7 or PF0 */
 			{
 				*(volatile uint32 *)((volatile uint8 *)current_port + PORT_LOCK_REG_OFFSET) = 0x4C4F434B;  /* unlock the GPIO-CR register */   
 				SET_BIT(*(volatile uint32 *)((volatile uint8 *)current_port + PORT_COMMIT_REG_OFFSET) , Port_PortPins[index].pin_num);  /* Set the corresponding bit in GPIOCR register to allow changes on this pin */
-			}
-			else if( (Port_PortPins[index].port_num == 2) && \
-					(Port_PortPins[index].pin_num <= 3) ) /* PC0 to PC3 */
-			{
-				/* Do Nothing ...  this is the JTAG pins */
 			}
 			else
 			{
@@ -171,7 +166,7 @@ void Port_Init( const Port_ConfigType* ConfigPtr){
 				}
 
 			}
-			else{
+			else{ /* Port_PortPins[index].dir_changeability = Direction_Unchangeable */
 				/* do nothing */
 			}
 #endif
@@ -214,8 +209,15 @@ void Port_SetPinDirection( Port_PinType Pin, Port_PinDirectionType Direction){
 		PORT_SET_PIN_DIRECTION_SID, 
 		PORT_E_UNINIT);
 	}
-	else
+	/* Invalid Port Pin ID requested */
+	else if (Pin >= PORT_PINS_NUMBER)
 	{
+		Det_ReportError(PORT_MODULE_ID, 
+		PORT_INSTANCE_ID,
+		PORT_SET_PIN_DIRECTION_SID, 
+		PORT_E_PARAM_PIN);
+	
+	}else{
 		/* No Action Required */
 	}
 #endif
@@ -399,17 +401,21 @@ void Port_SetPinMode(Port_PinType Pin, Port_PinModeType Mode){
 		PORT_E_UNINIT);
 		error=TRUE;
 	}
-	else
-	{
-		/* No Action Required */
-	}
-
 	/* check if pin mode is changeable */
-	if (Port_PortPins[Pin].mode_changeability == Mode_Unchangeable){
+	else if (Port_PortPins[Pin].mode_changeability == Mode_Unchangeable){
 		Det_ReportError(PORT_MODULE_ID, 
 		PORT_INSTANCE_ID,
 		PORT_SET_PIN_MODE_SID, 
 		PORT_E_MODE_UNCHANGEABLE);
+		error=TRUE;
+	}
+	/* Invalid Port Pin ID requested */
+	else if (Pin >= PORT_PINS_NUMBER)
+	{
+		Det_ReportError(PORT_MODULE_ID, 
+		PORT_INSTANCE_ID,
+		PORT_SET_PIN_DIRECTION_SID, 
+		PORT_E_PARAM_PIN);
 		error=TRUE;
 	}else{
 		/* No Action Required */

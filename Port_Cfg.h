@@ -67,8 +67,8 @@
 #define PORT_PIN_INITIAL_MODE               (PORT_PIN_MODE_DIO)
 
 /* Number of the configured Port Channels */
-/* 43 pins - 4 JTAG pins for TM4C123 */
-#define PORT_PINS_NUMBER                     (43U)
+/* 43 pins - 4 JTAG pins for TM4C123 (PC0-PC3) */
+#define PORT_PINS_NUMBER                     (39U)
 
 /* Ports index */
 #define PORTA           (uint8)0
