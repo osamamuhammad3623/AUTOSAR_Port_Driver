@@ -379,6 +379,12 @@ void Port_SetPinDirection( Port_PinType Pin, Port_PinDirectionType Direction){
 		PORT_SET_PIN_DIRECTION_SID, 
 		PORT_E_PARAM_PIN);
 	
+	}else if (Port_PortPins[Pin].dir_changeability == Direction_Unchangeable){
+		Det_ReportError(PORT_MODULE_ID, 
+		PORT_INSTANCE_ID,
+		PORT_SET_PIN_DIRECTION_SID, 
+		PORT_E_DIRECTION_UNCHANGEABLE);
+
 	}else{
 		/* No Action Required */
 	}
@@ -441,6 +447,7 @@ Return value:       None
 Description:        Refreshes port direction.
 **********************************************************************/
 void Port_RefreshPortDirection(void){
+	boolean error = FALSE;
 #if (PORT_DEV_ERROR_DETECT == STD_ON)
 	/* Check if the Driver is initialized before using this function */
 	if (PORT_NOT_INITIALIZED == Port_Status)
@@ -449,6 +456,7 @@ void Port_RefreshPortDirection(void){
 		PORT_INSTANCE_ID,
 		PORT_REFRESH_PIN_DIRECTION_SID, 
 		PORT_E_UNINIT);
+		error = TRUE;
 	}
 	else
 	{
@@ -456,40 +464,42 @@ void Port_RefreshPortDirection(void){
 	}
 #endif
 
-	for(int i=0; i < PORT_PINS_NUMBER; i++){
+	if (FALSE == error){
+		for(int i=0; i < PORT_PINS_NUMBER; i++){
 
-		if(Port_PortPins[i].direction == PORT_PIN_IN){
-			CLEAR_BIT(*(volatile uint32 *)((volatile uint8 *)Port_PortPins[i].port_num + PORT_DIR_REG_OFFSET),Port_PortPins[i].pin_num);
+			if(Port_PortPins[i].direction == PORT_PIN_IN){
+				CLEAR_BIT(*(volatile uint32 *)((volatile uint8 *)Port_PortPins[i].port_num + PORT_DIR_REG_OFFSET),Port_PortPins[i].pin_num);
 
-			if(Port_PortPins[i].internal_resistor_type == Pull_Up){
-				SET_BIT(*(volatile uint32 *)((volatile uint8 *)Port_PortPins[i].port_num + PORT_PULL_UP_REG_OFFSET ),Port_PortPins[i].pin_num);
-				CLEAR_BIT(*(volatile uint32 *)((volatile uint8 *)Port_PortPins[i].port_num + PORT_PULL_DOWN_REG_OFFSET ),Port_PortPins[i].pin_num);
-			
-			}else if (Port_PortPins[i].internal_resistor_type == Pull_Down){
-				CLEAR_BIT(*(volatile uint32 *)((volatile uint8 *)Port_PortPins[i].port_num + PORT_PULL_UP_REG_OFFSET ),Port_PortPins[i].pin_num);
-				SET_BIT(*(volatile uint32 *)((volatile uint8 *)Port_PortPins[i].port_num + PORT_PULL_DOWN_REG_OFFSET ),Port_PortPins[i].pin_num);
-			}
-			else{
-				/* Port_PortPins[i].internal_resistor_type == Off */
-				CLEAR_BIT(*(volatile uint32 *)((volatile uint8 *)Port_PortPins[i].port_num + PORT_PULL_UP_REG_OFFSET ),Port_PortPins[i].pin_num);
-				CLEAR_BIT(*(volatile uint32 *)((volatile uint8 *)Port_PortPins[i].port_num + PORT_PULL_DOWN_REG_OFFSET ),Port_PortPins[i].pin_num);
-			}
-
-		}else if (Port_PortPins[i].direction == PORT_PIN_OUT){
-			SET_BIT(*(volatile uint32 *)((volatile uint8 *)Port_PortPins[i].port_num + PORT_DIR_REG_OFFSET),Port_PortPins[i].pin_num);
-
-			if (Port_PortPins[i].init_value == STD_HIGH){
-				SET_BIT(*(volatile uint32 *)((volatile uint8 *)Port_PortPins[i].port_num + PORT_DATA_REG_OFFSET),Port_PortPins[i].pin_num);
+				if(Port_PortPins[i].internal_resistor_type == Pull_Up){
+					SET_BIT(*(volatile uint32 *)((volatile uint8 *)Port_PortPins[i].port_num + PORT_PULL_UP_REG_OFFSET ),Port_PortPins[i].pin_num);
+					CLEAR_BIT(*(volatile uint32 *)((volatile uint8 *)Port_PortPins[i].port_num + PORT_PULL_DOWN_REG_OFFSET ),Port_PortPins[i].pin_num);
 				
-			}else if (Port_PortPins[i].init_value == STD_LOW){
-				CLEAR_BIT(*(volatile uint32 *)((volatile uint8 *)Port_PortPins[i].port_num + PORT_DATA_REG_OFFSET),Port_PortPins[i].pin_num);
-			
+				}else if (Port_PortPins[i].internal_resistor_type == Pull_Down){
+					CLEAR_BIT(*(volatile uint32 *)((volatile uint8 *)Port_PortPins[i].port_num + PORT_PULL_UP_REG_OFFSET ),Port_PortPins[i].pin_num);
+					SET_BIT(*(volatile uint32 *)((volatile uint8 *)Port_PortPins[i].port_num + PORT_PULL_DOWN_REG_OFFSET ),Port_PortPins[i].pin_num);
+				}
+				else{
+					/* Port_PortPins[i].internal_resistor_type == Off */
+					CLEAR_BIT(*(volatile uint32 *)((volatile uint8 *)Port_PortPins[i].port_num + PORT_PULL_UP_REG_OFFSET ),Port_PortPins[i].pin_num);
+					CLEAR_BIT(*(volatile uint32 *)((volatile uint8 *)Port_PortPins[i].port_num + PORT_PULL_DOWN_REG_OFFSET ),Port_PortPins[i].pin_num);
+				}
+
+			}else if (Port_PortPins[i].direction == PORT_PIN_OUT){
+				SET_BIT(*(volatile uint32 *)((volatile uint8 *)Port_PortPins[i].port_num + PORT_DIR_REG_OFFSET),Port_PortPins[i].pin_num);
+
+				if (Port_PortPins[i].init_value == STD_HIGH){
+					SET_BIT(*(volatile uint32 *)((volatile uint8 *)Port_PortPins[i].port_num + PORT_DATA_REG_OFFSET),Port_PortPins[i].pin_num);
+					
+				}else if (Port_PortPins[i].init_value == STD_LOW){
+					CLEAR_BIT(*(volatile uint32 *)((volatile uint8 *)Port_PortPins[i].port_num + PORT_DATA_REG_OFFSET),Port_PortPins[i].pin_num);
+				
+				}else{
+					/* do nothing */
+				}
+
 			}else{
 				/* do nothing */
 			}
-
-		}else{
-			/* do nothing */
 		}
 	}
 
