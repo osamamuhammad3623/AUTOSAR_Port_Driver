@@ -30,14 +30,17 @@
 *                              Port Pin Modes                                   *
 *******************************************************************************/
 #define PORT_PIN_MODE_ADC		(0U)
-#define PORT_PIN_MODE_DIO		(1U)
-#define PORT_PIN_MODE_CAN		(2U)
-#define PORT_PIN_MODE_DIO_GPT	(3U)
-#define PORT_PIN_MODE_DIO_WDG	(4U)
-#define PORT_PIN_MODE_ICU		(5U)
-#define PORT_PIN_MODE_PWM		(6U)
-#define PORT_PIN_MODE_SPI		(7U)
-
+#define PORT_PIN_MODE_UART		(1U)
+#define PORT_PIN_MODE_SSI		(2U)
+#define PORT_PIN_MODE_I2C		(3U) 
+#define PORT_PIN_MODE_M0PWM 	(4U)
+#define PORT_PIN_MODE_M0FAULT 	(4U)
+#define PORT_PIN_MODE_M1PWM 	(5U)
+#define PORT_PIN_MODE_GPT   	(7U)
+#define PORT_PIN_MODE_CAN		(8U)
+#define PORT_PIN_MODE_USB		(8U)
+#define PORT_PIN_MODE_NMI		(8U)
+#define PORT_PIN_MODE_DIO		(9U)
 
 /*******************************************************************************
 *                              Pre-Compile configurations                      *
@@ -57,11 +60,11 @@
 /* Parameter to indicate if the direction is changeable on a port pin during runtime */
 #define PORT_PIN_DIRECTION_CHANGEABLE       (STD_ON)
 
-/* Parameter to indicate if the mode is changeable on a port pin during runtime */
-#define PORT_PIN_MODE_CHANGEABLE            (STD_ON)
-
 /* Pre-compile option for The initial direction of the pin */
 #define PORT_PIN_DIRECTION                  (PORT_PIN_IN)
+
+/* Parameter to indicate if the mode is changeable on a port pin during runtime */
+#define PORT_PIN_MODE_CHANGEABLE            (STD_ON)
 
 /* the initial Port pin mode */
 #define PORT_PIN_INITIAL_MODE               (PORT_PIN_MODE_DIO)
