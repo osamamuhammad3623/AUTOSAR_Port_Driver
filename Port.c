@@ -93,6 +93,11 @@ void Port_Init( const Port_ConfigType* ConfigPtr){
 				/* Do Nothing ... No need to unlock the commit register for this pin */
 			}
 
+			/*
+			if pin direction is changeable: ignore the initial mode, and go to pin_dir member in the structure
+			if pin direction is NOT changeable: set the initial mode, and ignore pin_dir member in the structure
+			*/
+#if (PORT_PIN_DIRECTION_CHANGEABLE == STD_OFF)
 			/* set the default pin direction first */
 			if(PORT_PIN_DIRECTION == PORT_PIN_IN){
 				CLEAR_BIT(*(volatile uint32 *)((volatile uint8 *)current_port + PORT_DIR_REG_OFFSET),Port_PortPins[index].pin_num);
@@ -117,7 +122,7 @@ void Port_Init( const Port_ConfigType* ConfigPtr){
 					SET_BIT(*(volatile uint32 *)((volatile uint8 *)current_port + PORT_DATA_REG_OFFSET),Port_PortPins[index].pin_num);
 					
 				}else if (Port_PortPins[index].init_value == STD_LOW){
-					SET_BIT(*(volatile uint32 *)((volatile uint8 *)current_port + PORT_DATA_REG_OFFSET),Port_PortPins[index].pin_num);
+					CLEAR_BIT(*(volatile uint32 *)((volatile uint8 *)current_port + PORT_DATA_REG_OFFSET),Port_PortPins[index].pin_num);
 				
 				}else{
 					/* do nothing */
@@ -126,9 +131,9 @@ void Port_Init( const Port_ConfigType* ConfigPtr){
 			}else{
 				/* do nothing */
 			}
-
+#else
 			/* if pin direction is changeable, set the direction according to the pin configuration */
-#if (PORT_PIN_DIRECTION_CHANGEABLE == STD_ON)
+
 			if (Port_PortPins[index].dir_changeability == Direction_Changeable){
 
 				if(Port_PortPins[index].direction == PORT_PIN_IN){
@@ -155,7 +160,7 @@ void Port_Init( const Port_ConfigType* ConfigPtr){
 						SET_BIT(*(volatile uint32 *)((volatile uint8 *)current_port + PORT_DATA_REG_OFFSET),Port_PortPins[index].pin_num);
 						
 					}else if (Port_PortPins[index].init_value == STD_LOW){
-						SET_BIT(*(volatile uint32 *)((volatile uint8 *)current_port + PORT_DATA_REG_OFFSET),Port_PortPins[index].pin_num);
+						CLEAR_BIT(*(volatile uint32 *)((volatile uint8 *)current_port + PORT_DATA_REG_OFFSET),Port_PortPins[index].pin_num);
 					
 					}else{
 						/* do nothing */
@@ -171,17 +176,174 @@ void Port_Init( const Port_ConfigType* ConfigPtr){
 			}
 #endif
 
-			/* set the default/initial pin mode first */
-				/* code here */
-			
+			/* set the Digital Enable register */
+			if (PORT_PIN_INITIAL_MODE == PORT_PIN_MODE_ADC){
+				/* if mode is ADC, clear Digital Enable bit & enable Analog mode*/
+				CLEAR_BIT(*(volatile uint32 *)((volatile uint8 *)current_port + PORT_DIGITAL_ENABLE_REG_OFFSET),Port_PortPins[index].pin_num);
+				SET_BIT(*(volatile uint32 *)((volatile uint8 *)current_port + PORT_ANALOG_MODE_SEL_REG_OFFSET),Port_PortPins[index].pin_num);				
+			}else{
+				SET_BIT(*(volatile uint32 *)((volatile uint8 *)current_port + PORT_DIGITAL_ENABLE_REG_OFFSET),Port_PortPins[index].pin_num);
+				CLEAR_BIT(*(volatile uint32 *)((volatile uint8 *)current_port + PORT_ANALOG_MODE_SEL_REG_OFFSET),Port_PortPins[index].pin_num);				
+			}
 
-			/* if mode is changeable, set the mode according to pin configuration */
-#if (PORT_PIN_MODE_CHANGEABLE == STD_ON)
+			/*
+			if mode is changeable: ignore the initial mode, and go to pin_mode member in the structure
+			if mode is NOT changeable: set the initial mode, and ignore pin_mode member in the structure
+			*/
+#if (PORT_PIN_MODE_CHANGEABLE == STD_OFF)
+			/* set the default/initial mode: PORT_PIN_INITIAL_MODE */
+			switch(PORT_PIN_INITIAL_MODE){
+				case PORT_PIN_MODE_ADC:
+					/*do nothing*/
+					break;
+				
+				case PORT_PIN_MODE_DIO:
+					/*clear the PCTL*/
+					*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) &= ~(0x0000000F << (Port_PortPins[index].pin_num * 4));
+					break;
+				
+				case PORT_PIN_MODE_UART:
+					*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) |= (PORT_PIN_MODE_UART << (Port_PortPins[index].pin_num * 4));
+					break;
+				
+				case PORT_PIN_MODE_SSI:
+					if((Port_PortPins[index].port_num==PORTD)&&(Port_PortPins[index].pin_num<=PIN3_INDEX))
+					{
+						*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) |= (PORT_PIN_MODE_UART << (Port_PortPins[index].pin_num * 4));
+					}
+					else
+					{
+						*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) |= (PORT_PIN_MODE_SSI << (Port_PortPins[index].pin_num * 4));
+					}
+					break;
+				
+				case PORT_PIN_MODE_I2C:
+					*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) |= (PORT_PIN_MODE_I2C<< (Port_PortPins[index].pin_num * 4));
+					break;
+				
+				case PORT_PIN_MODE_M0PWM:
+					if(((Port_PortPins[index].port_num==PORTD)&&(Port_PortPins[index].pin_num<=PIN2_INDEX))||((Port_PortPins[index].port_num==PORTD)&&(Port_PortPins[index].pin_num<=PIN6_INDEX))||((Port_PortPins[index].port_num==PORTF)&&(Port_PortPins[index].pin_num<=PIN2_INDEX)))
+					{
+						*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) |= ((uint32)PORT_PIN_MODE_M0FAULT << (Port_PortPins[index].pin_num * 4));
+					}
+					else
+					{
+						*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) |= ((uint32)PORT_PIN_MODE_M0PWM << (Port_PortPins[index].pin_num * 4));
+					}
+					break;
+				
+				case PORT_PIN_MODE_M1PWM:
+					*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) |= ((uint32)PORT_PIN_MODE_M1PWM << (Port_PortPins[index].pin_num * 4));
+					break;
+				
+				case PORT_PIN_MODE_GPT:
+					*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) |= (PORT_PIN_MODE_GPT<< (Port_PortPins[index].pin_num * 4));
+					break;
 
+				case PORT_PIN_MODE_CAN:
+					if(((Port_PortPins[index].port_num==PORTA)&&((Port_PortPins[index].port_num==PIN0_INDEX)||(Port_PortPins[index].port_num==PIN1_INDEX)))||
+						((Port_PortPins[index].port_num==PORTB)&&((Port_PortPins[index].port_num==PIN4_INDEX)||(Port_PortPins[index].port_num==PIN5_INDEX)))||
+						((Port_PortPins[index].port_num==PORTE)&&((Port_PortPins[index].port_num==PIN4_INDEX)||(Port_PortPins[index].port_num==PIN5_INDEX))))
+					{
+						*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) |= ((uint32)PORT_PIN_MODE_CAN<< (Port_PortPins[index].pin_num * 4));
+					}
+					else if(((Port_PortPins[index].port_num==PORTC)&&((Port_PortPins[index].port_num==PIN6_INDEX)||(Port_PortPins[index].port_num==PIN7_INDEX)))||
+							((Port_PortPins[index].port_num==PORTD)&&((Port_PortPins[index].port_num==PIN2_INDEX)||(Port_PortPins[index].port_num==PIN3_INDEX)))||
+							((Port_PortPins[index].port_num==PORTF)&&((Port_PortPins[index].port_num==PIN4_INDEX))))
+					{
+						*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) |= (PORT_PIN_MODE_USB<< (Port_PortPins[index].pin_num * 4));
+					}
+					else if (((Port_PortPins[index].port_num==PORTD)&&(Port_PortPins[index].port_num==PIN7_INDEX))||\
+						((Port_PortPins[index].port_num==PORTF)&&(Port_PortPins[index].port_num==PIN0_INDEX)))
+					{
+						*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) |= (PORT_PIN_MODE_NMI<< (Port_PortPins[index].pin_num * 4));
+					}
+					else
+					{
+						/*do nothing*/
+					}
+					break;
+				default:
+					break;
+			}
+
+#else
+			switch(Port_PortPins[index].pin_mode){
+				case PORT_PIN_MODE_ADC:
+					/*do nothing*/
+					break;
+				
+				case PORT_PIN_MODE_DIO:
+					/*clear the PCTL*/
+					*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) &= ~(0x0000000F << (Port_PortPins[index].pin_num * 4));
+					break;
+				
+				case PORT_PIN_MODE_UART:
+					*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) |= (PORT_PIN_MODE_UART << (Port_PortPins[index].pin_num * 4));
+					break;
+				
+				case PORT_PIN_MODE_SSI:
+					if((Port_PortPins[index].port_num==PORTD)&&(Port_PortPins[index].pin_num<=PIN3_INDEX))
+					{
+						*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) |= (PORT_PIN_MODE_UART << (Port_PortPins[index].pin_num * 4));
+					}
+					else
+					{
+						*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) |= (PORT_PIN_MODE_SSI << (Port_PortPins[index].pin_num * 4));
+					}
+					break;
+				
+				case PORT_PIN_MODE_I2C:
+					*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) |= (PORT_PIN_MODE_I2C<< (Port_PortPins[index].pin_num * 4));
+					break;
+				
+				case PORT_PIN_MODE_M0PWM:
+					if(((Port_PortPins[index].port_num==PORTD)&&(Port_PortPins[index].pin_num<=PIN2_INDEX))||((Port_PortPins[index].port_num==PORTD)&&(Port_PortPins[index].pin_num<=PIN6_INDEX))||((Port_PortPins[index].port_num==PORTF)&&(Port_PortPins[index].pin_num<=PIN2_INDEX)))
+					{
+						*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) |= ((uint32)PORT_PIN_MODE_M0FAULT << (Port_PortPins[index].pin_num * 4));
+					}
+					else
+					{
+						*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) |= ((uint32)PORT_PIN_MODE_M0PWM << (Port_PortPins[index].pin_num * 4));
+					}
+					break;
+				
+				case PORT_PIN_MODE_M1PWM:
+					*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) |= ((uint32)PORT_PIN_MODE_M1PWM << (Port_PortPins[index].pin_num * 4));
+					break;
+				
+				case PORT_PIN_MODE_GPT:
+					*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) |= (PORT_PIN_MODE_GPT<< (Port_PortPins[index].pin_num * 4));
+					break;
+
+				case PORT_PIN_MODE_CAN:
+					if(((Port_PortPins[index].port_num==PORTA)&&((Port_PortPins[index].port_num==PIN0_INDEX)||(Port_PortPins[index].port_num==PIN1_INDEX)))||
+						((Port_PortPins[index].port_num==PORTB)&&((Port_PortPins[index].port_num==PIN4_INDEX)||(Port_PortPins[index].port_num==PIN5_INDEX)))||
+						((Port_PortPins[index].port_num==PORTE)&&((Port_PortPins[index].port_num==PIN4_INDEX)||(Port_PortPins[index].port_num==PIN5_INDEX))))
+					{
+						*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) |= ((uint32)PORT_PIN_MODE_CAN<< (Port_PortPins[index].pin_num * 4));
+					}
+					else if(((Port_PortPins[index].port_num==PORTC)&&((Port_PortPins[index].port_num==PIN6_INDEX)||(Port_PortPins[index].port_num==PIN7_INDEX)))||
+							((Port_PortPins[index].port_num==PORTD)&&((Port_PortPins[index].port_num==PIN2_INDEX)||(Port_PortPins[index].port_num==PIN3_INDEX)))||
+							((Port_PortPins[index].port_num==PORTF)&&((Port_PortPins[index].port_num==PIN4_INDEX))))
+					{
+						*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) |= (PORT_PIN_MODE_USB<< (Port_PortPins[index].pin_num * 4));
+					}
+					else if (((Port_PortPins[index].port_num==PORTD)&&(Port_PortPins[index].port_num==PIN7_INDEX))||\
+						((Port_PortPins[index].port_num==PORTF)&&(Port_PortPins[index].port_num==PIN0_INDEX)))
+					{
+						*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) |= (PORT_PIN_MODE_NMI<< (Port_PortPins[index].pin_num * 4));
+					}
+					else
+					{
+						/*do nothing*/
+					}
+					break;
+				default:
+					break;
+			}
 #endif
-
 		}
-
 	}
 }
 
@@ -249,7 +411,7 @@ void Port_SetPinDirection( Port_PinType Pin, Port_PinDirectionType Direction){
 				SET_BIT(*(volatile uint32 *)((volatile uint8 *)Port_PortPins[Pin].port_num + PORT_DATA_REG_OFFSET),Port_PortPins[Pin].pin_num);
 				
 			}else if (Port_PortPins[Pin].init_value == STD_LOW){
-				SET_BIT(*(volatile uint32 *)((volatile uint8 *)Port_PortPins[Pin].port_num + PORT_DATA_REG_OFFSET),Port_PortPins[Pin].pin_num);
+				CLEAR_BIT(*(volatile uint32 *)((volatile uint8 *)Port_PortPins[Pin].port_num + PORT_DATA_REG_OFFSET),Port_PortPins[Pin].pin_num);
 			
 			}else{
 				/* do nothing */
@@ -320,7 +482,7 @@ void Port_RefreshPortDirection(void){
 				SET_BIT(*(volatile uint32 *)((volatile uint8 *)Port_PortPins[i].port_num + PORT_DATA_REG_OFFSET),Port_PortPins[i].pin_num);
 				
 			}else if (Port_PortPins[i].init_value == STD_LOW){
-				SET_BIT(*(volatile uint32 *)((volatile uint8 *)Port_PortPins[i].port_num + PORT_DATA_REG_OFFSET),Port_PortPins[i].pin_num);
+				CLEAR_BIT(*(volatile uint32 *)((volatile uint8 *)Port_PortPins[i].port_num + PORT_DATA_REG_OFFSET),Port_PortPins[i].pin_num);
 			
 			}else{
 				/* do nothing */
@@ -422,4 +584,111 @@ void Port_SetPinMode(Port_PinType Pin, Port_PinModeType Mode){
 	}
 #endif
 
+#if (PORT_PIN_MODE_CHANGEABLE == STD_ON)
+	if (FALSE == error){
+
+		/* a pointer to indicate what port we will operate on  */
+		volatile uint32* current_port = NULL_PTR;
+
+		switch (Port_PortPins[Pin].port_num)
+			{
+			case PORTA:
+				current_port = (volatile uint32*)GPIO_PORTA_BASE_ADDRESS;
+				break;
+			case PORTB:
+				current_port = (volatile uint32*)GPIO_PORTB_BASE_ADDRESS;
+				break;
+			case PORTC:
+				current_port = (volatile uint32*)GPIO_PORTC_BASE_ADDRESS;
+				break;
+			case PORTD:
+				current_port = (volatile uint32*)GPIO_PORTD_BASE_ADDRESS;
+				break;
+			case PORTE:
+				current_port = (volatile uint32*)GPIO_PORTE_BASE_ADDRESS;
+				break;
+			case PORTF:
+				current_port = (volatile uint32*)GPIO_PORTF_BASE_ADDRESS;
+				break;
+			default:
+				break;
+			}
+
+		switch(Mode){
+			case PORT_PIN_MODE_ADC:
+				/*do nothing*/
+				break;
+			
+			case PORT_PIN_MODE_DIO:
+				/*clear the PCTL*/
+				*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) &= ~(0x0000000F << (Port_PortPins[Pin].pin_num * 4));
+				break;
+			
+			case PORT_PIN_MODE_UART:
+				*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) |= (PORT_PIN_MODE_UART << (Port_PortPins[Pin].pin_num * 4));
+				break;
+			
+			case PORT_PIN_MODE_SSI:
+				if((Port_PortPins[Pin].port_num==PORTD)&&(Port_PortPins[Pin].pin_num<=PIN3_INDEX))
+				{
+					*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) |= (PORT_PIN_MODE_UART << (Port_PortPins[Pin].pin_num * 4));
+				}
+				else
+				{
+					*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) |= (PORT_PIN_MODE_SSI << (Port_PortPins[Pin].pin_num * 4));
+				}
+				break;
+			
+			case PORT_PIN_MODE_I2C:
+				*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) |= (PORT_PIN_MODE_I2C<< (Port_PortPins[Pin].pin_num * 4));
+				break;
+			
+			case PORT_PIN_MODE_M0PWM:
+				if(((Port_PortPins[Pin].port_num==PORTD)&&(Port_PortPins[Pin].pin_num<=PIN2_INDEX))||((Port_PortPins[Pin].port_num==PORTD)&&(Port_PortPins[Pin].pin_num<=PIN6_INDEX))||((Port_PortPins[Pin].port_num==PORTF)&&(Port_PortPins[Pin].pin_num<=PIN2_INDEX)))
+				{
+					*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) |= ((uint32)PORT_PIN_MODE_M0FAULT << (Port_PortPins[Pin].pin_num * 4));
+				}
+				else
+				{
+					*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) |= ((uint32)PORT_PIN_MODE_M0PWM << (Port_PortPins[Pin].pin_num * 4));
+				}
+				break;
+			
+			case PORT_PIN_MODE_M1PWM:
+				*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) |= ((uint32)PORT_PIN_MODE_M1PWM << (Port_PortPins[Pin].pin_num * 4));
+				break;
+			
+			case PORT_PIN_MODE_GPT:
+				*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) |= (PORT_PIN_MODE_GPT<< (Port_PortPins[Pin].pin_num * 4));
+				break;
+
+			case PORT_PIN_MODE_CAN:
+				if(((Port_PortPins[Pin].port_num==PORTA)&&((Port_PortPins[Pin].port_num==PIN0_INDEX)||(Port_PortPins[Pin].port_num==PIN1_INDEX)))||
+					((Port_PortPins[Pin].port_num==PORTB)&&((Port_PortPins[Pin].port_num==PIN4_INDEX)||(Port_PortPins[Pin].port_num==PIN5_INDEX)))||
+					((Port_PortPins[Pin].port_num==PORTE)&&((Port_PortPins[Pin].port_num==PIN4_INDEX)||(Port_PortPins[Pin].port_num==PIN5_INDEX))))
+				{
+					*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) |= ((uint32)PORT_PIN_MODE_CAN<< (Port_PortPins[Pin].pin_num * 4));
+				}
+				else if(((Port_PortPins[Pin].port_num==PORTC)&&((Port_PortPins[Pin].port_num==PIN6_INDEX)||(Port_PortPins[Pin].port_num==PIN7_INDEX)))||
+						((Port_PortPins[Pin].port_num==PORTD)&&((Port_PortPins[Pin].port_num==PIN2_INDEX)||(Port_PortPins[Pin].port_num==PIN3_INDEX)))||
+						((Port_PortPins[Pin].port_num==PORTF)&&((Port_PortPins[Pin].port_num==PIN4_INDEX))))
+				{
+					*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) |= (PORT_PIN_MODE_USB<< (Port_PortPins[Pin].pin_num * 4));
+				}
+				else if (((Port_PortPins[Pin].port_num==PORTD)&&(Port_PortPins[Pin].port_num==PIN7_INDEX))||\
+					((Port_PortPins[Pin].port_num==PORTF)&&(Port_PortPins[Pin].port_num==PIN0_INDEX)))
+				{
+					*(volatile uint32 *)((volatile uint8 *)current_port + PORT_CTL_REG_OFFSET) |= (PORT_PIN_MODE_NMI<< (Port_PortPins[Pin].pin_num * 4));
+				}
+				else
+				{
+					/*do nothing*/
+				}
+				break;
+			default:
+				break;
+		}
+
+	}
+#endif /* PORT_PIN_MODE_CHANGEABLE = STD_OFF */
 }
