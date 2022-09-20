@@ -71,7 +71,7 @@
 
 /* Number of the configured Port Channels */
 /* 43 pins - 4 JTAG pins for TM4C123 (PC0-PC3) */
-#define PORT_PINS_NUMBER                     (39U)
+#define PORT_PINS_NUMBER                     (5U)
 
 /* Ports index */
 #define PORTA           (uint8)0

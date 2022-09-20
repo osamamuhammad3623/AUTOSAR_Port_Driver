@@ -39,6 +39,7 @@
 
 /* PB structure used with Port_Init API */
 const Port_ConfigType Port_Configuration = {
+  /*
 		PORTA , PIN0_INDEX, PORT_PIN_IN, OFF, STD_LOW , PORT_PIN_MODE_DIO , Direction_Changeable, Mode_Changeable,
 		PORTA , PIN1_INDEX, PORT_PIN_IN, OFF, STD_LOW , PORT_PIN_MODE_DIO , Direction_Changeable, Mode_Changeable,
 		PORTA , PIN2_INDEX, PORT_PIN_IN, OFF, STD_LOW , PORT_PIN_MODE_DIO , Direction_Changeable, Mode_Changeable,
@@ -79,11 +80,11 @@ const Port_ConfigType Port_Configuration = {
 		PORTE , PIN5_INDEX, PORT_PIN_IN, OFF, STD_LOW , PORT_PIN_MODE_DIO , Direction_Changeable, Mode_Changeable,
 		PORTE , PIN6_INDEX, PORT_PIN_IN, OFF, STD_LOW , PORT_PIN_MODE_DIO , Direction_Changeable, Mode_Changeable,
 		PORTE , PIN7_INDEX, PORT_PIN_IN, OFF, STD_LOW , PORT_PIN_MODE_DIO , Direction_Changeable, Mode_Changeable,
-/*
-		PORTF , PIN0_INDEX, PORT_PIN_IN, OFF, STD_LOW , PORT_PIN_MODE_DIO , Direction_Changeable, Mode_Changeable,
-		PORTF , PIN1_INDEX, PORT_PIN_IN, OFF, STD_LOW , PORT_PIN_MODE_DIO , Direction_Changeable, Mode_Changeable,
-		PORTF , PIN2_INDEX, PORT_PIN_IN, OFF, STD_LOW , PORT_PIN_MODE_DIO , Direction_Changeable, Mode_Changeable,
-		PORTF , PIN3_INDEX, PORT_PIN_IN, OFF, STD_LOW , PORT_PIN_MODE_DIO , Direction_Changeable, Mode_Changeable,
-		PORTF , PIN4_INDEX, PORT_PIN_IN, OFF, STD_LOW , PORT_PIN_MODE_DIO , Direction_Changeable, Mode_Changeable
 */
+		PORTF , PIN0_INDEX, PORT_PIN_IN, Pull_Up, STD_LOW , PORT_PIN_MODE_DIO , Direction_Changeable, Mode_Changeable,
+		PORTF , PIN1_INDEX, PORT_PIN_OUT, OFF, STD_LOW , PORT_PIN_MODE_DIO , Direction_Changeable, Mode_Changeable,
+		PORTF , PIN2_INDEX, PORT_PIN_OUT, OFF, STD_LOW , PORT_PIN_MODE_DIO , Direction_Changeable, Mode_Changeable,
+		PORTF , PIN3_INDEX, PORT_PIN_OUT, OFF, STD_HIGH , PORT_PIN_MODE_DIO , Direction_Changeable, Mode_Changeable,
+		PORTF , PIN4_INDEX, PORT_PIN_IN, OFF, STD_LOW , PORT_PIN_MODE_DIO , Direction_Changeable, Mode_Changeable
+
 };
