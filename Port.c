@@ -192,6 +192,14 @@ void Port_Init( const Port_ConfigType* ConfigPtr){
 			*/
 #if (PORT_PIN_MODE_CHANGEABLE == STD_OFF)
 			/* set the default/initial mode: PORT_PIN_INITIAL_MODE */
+
+			/* Enable AFSEL if Port pin is not DIO or ADC */
+			if (Port_PortPins[index].pin_mode != PORT_PIN_MODE_DIO || Port_PortPins[index].pin_mode != PORT_PIN_MODE_DIO){
+				SET_BIT(*(volatile uint32 *)((volatile uint8 *)current_port + PORT_ALT_FUNC_REG_OFFSET),0);
+			}else{
+				CLEAR_BIT(*(volatile uint32 *)((volatile uint8 *)current_port + PORT_ALT_FUNC_REG_OFFSET),0);
+			}
+
 			switch(PORT_PIN_INITIAL_MODE){
 				case PORT_PIN_MODE_ADC:
 					/*do nothing*/
@@ -268,6 +276,13 @@ void Port_Init( const Port_ConfigType* ConfigPtr){
 			}
 
 #else
+			/* Enable AFSEL if Port pin is not DIO or ADC */
+			if (Port_PortPins[index].pin_mode != PORT_PIN_MODE_DIO || Port_PortPins[index].pin_mode != PORT_PIN_MODE_DIO){
+				SET_BIT(*(volatile uint32 *)((volatile uint8 *)current_port + PORT_ALT_FUNC_REG_OFFSET),0);
+			}else{
+				CLEAR_BIT(*(volatile uint32 *)((volatile uint8 *)current_port + PORT_ALT_FUNC_REG_OFFSET),0);
+			}
+
 			switch(Port_PortPins[index].pin_mode){
 				case PORT_PIN_MODE_ADC:
 					/*do nothing*/
@@ -623,6 +638,13 @@ void Port_SetPinMode(Port_PinType Pin, Port_PinModeType Mode){
 			default:
 				break;
 			}
+
+		/* Enable AFSEL if Port pin is not DIO or ADC */
+		if (Mode != PORT_PIN_MODE_DIO || Mode != PORT_PIN_MODE_DIO){
+			SET_BIT(*(volatile uint32 *)((volatile uint8 *)current_port + PORT_ALT_FUNC_REG_OFFSET),0);
+		}else{
+			CLEAR_BIT(*(volatile uint32 *)((volatile uint8 *)current_port + PORT_ALT_FUNC_REG_OFFSET),0);
+		}
 
 		switch(Mode){
 			case PORT_PIN_MODE_ADC:
